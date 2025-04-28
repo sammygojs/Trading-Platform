@@ -1,1 +1,16 @@
-backend/node-api/node_modules
+# Node.js API backend
+backend/node-api/node_modules/
+backend/node-api/dist/
+backend/node-api/build/
+backend/node-api/.env
+backend/node-api/.env.local
+backend/node-api/.env.development.local
+backend/node-api/.env.test.local
+backend/node-api/.env.production.local
+backend/node-api/npm-debug.log*
+backend/node-api/yarn-debug.log*
+backend/node-api/yarn-error.log*
+
+# Global ignores
+.DS_Store
+Thumbs.db
