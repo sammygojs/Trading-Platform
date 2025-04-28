@@ -406,3 +406,195 @@ module.exports = router;
 ```
 
 ---
+
+## 🚀 Sprint 1 — Part 4: Frontend Setup
+
+### 1. Initialize React Frontend
+
+From project root:
+
+```bash
+cd frontend
+npm create vite@latest
+```
+
+- Project name: `frontend`
+- Framework: `React`
+- Variant: `JavaScript` (or `TypeScript` if you prefer)
+
+Install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+---
+
+### 2. Install Axios and React Router
+
+```bash
+npm install axios react-router-dom
+```
+
+- `axios`: for making HTTP requests
+- `react-router-dom`: for client-side routing
+
+---
+
+### 3. Create Basic Frontend Folder Structure
+
+Inside `frontend/src/`:
+
+```
+src/
+├── api/
+│   └── auth.js       # Axios functions for login/register
+├── components/
+│   ├── Login.jsx     # Login page
+│   ├── Register.jsx  # Register page
+│   └── Dashboard.jsx # After login (protected page)
+├── App.jsx
+├── main.jsx
+├── router/
+│   └── AppRouter.jsx # All routes
+└── styles/
+    └── styles.css    # (optional)
+```
+
+---
+
+### 4. Set up Axios API Calls
+
+`frontend/src/api/auth.js`:
+
+```javascript
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000/api/auth';
+
+export const register = (userData) => {
+  return axios.post(`${API_URL}/register`, userData);
+};
+
+export const login = (userData) => {
+  return axios.post(`${API_URL}/login`, userData);
+};
+```
+
+---
+
+### 5. Create React Pages
+
+✅ `frontend/src/components/Register.jsx`:
+
+```jsx
+import { useState } from 'react';
+import { register } from '../api/auth';
+
+export default function Register() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      await register({ username, password });
+      alert('Registration successful!');
+    } catch (error) {
+      alert('Registration failed');
+    }
+  };
+
+  return (
+    <form onSubmit={handleRegister}>
+      <h2>Register</h2>
+      <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit">Register</button>
+    </form>
+  );
+}
+```
+
+✅ `frontend/src/components/Login.jsx`:
+
+```jsx
+import { useState } from 'react';
+import { login } from '../api/auth';
+
+export default function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await login({ username, password });
+      localStorage.setItem('token', res.data.token);
+      alert('Login successful!');
+      window.location.href = '/dashboard';
+    } catch (error) {
+      alert('Login failed');
+    }
+  };
+
+  return (
+    <form onSubmit={handleLogin}>
+      <h2>Login</h2>
+      <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+---
+
+### 6. Set up Routing
+
+✅ `frontend/src/router/AppRouter.jsx`:
+
+```jsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Register from '../components/Register';
+import Login from '../components/Login';
+import Dashboard from '../components/Dashboard';
+
+export default function AppRouter() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+✅ `frontend/src/App.jsx`:
+
+```jsx
+import AppRouter from './router/AppRouter';
+
+export default function App() {
+  return <AppRouter />;
+}
+```
+
+---
+
+### 7. Run the Frontend
+
+Inside `frontend/`:
+
+```bash
+npm run dev
+```
+
+✅ Frontend available at `http://localhost:5173/`.
+
+---
