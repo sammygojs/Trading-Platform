@@ -136,3 +136,273 @@ Future sprints will focus on:
 
 ---
 
+
+## 🚀 Sprint 1 — Part 1: Backend Setup
+
+### 1. Initialize Node.js Project
+
+Inside the `backend/node-api/` folder:
+
+```bash
+cd backend/node-api
+npm init -y
+```
+
+---
+
+### 2. Install Backend Dependencies
+
+```bash
+npm install express cors dotenv jsonwebtoken bcryptjs pg
+```
+
+---
+
+### 3. Install Dev Dependencies
+
+```bash
+npm install --save-dev nodemon
+```
+
+Add to `package.json`:
+
+```json
+"scripts": {
+  "dev": "nodemon index.js"
+}
+```
+
+---
+
+### 4. Create `index.js`
+
+```javascript
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+---
+
+### 5. Create `.env` File
+
+```plaintext
+PORT=5000
+JWT_SECRET=your_jwt_secret_here
+DATABASE_URL=postgresql://your_db_username:your_db_password@localhost:5432/your_db_name
+```
+
+---
+
+## 🚀 Sprint 1 — Part 2: User Registration/Login API
+
+### 6. Create Authentication Routes
+
+Create `backend/node-api/routes/auth.js`:
+
+```javascript
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const router = express.Router();
+
+const users = [];
+
+router.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  users.push({ username, password: hashedPassword });
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username);
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid credentials' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    return res.status(400).json({ message: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign(
+    { username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  res.json({ token });
+});
+
+module.exports = router;
+```
+
+---
+
+### 7. Connect Routes to Express App
+
+Update `backend/node-api/index.js`:
+
+```javascript
+const authRoutes = require('./routes/auth');
+
+app.use('/api/auth', authRoutes);
+```
+
+---
+
+## 🏁 Sprint 1 Checkpoints
+
+- [x] Server running at `http://localhost:5003`
+- [x] POST `/api/auth/register` to create a user
+- [x] POST `/api/auth/login` to receive JWT
+
+Run the server:
+
+```bash
+npm run dev
+```
+
+## 🚀 Sprint 1 — Part 3: Connect Node.js API to PostgreSQL
+
+### 1. Install Prisma ORM
+
+```bash
+npm install prisma @prisma/client
+```
+
+Initialize Prisma:
+
+```bash
+npx prisma init
+```
+
+This creates:
+- `prisma/schema.prisma` (where you'll define models)
+- `.env` (already exists; ensure `DATABASE_URL` is correct)
+
+---
+
+### 2. Setup `.env` DATABASE_URL
+
+Example:
+
+```plaintext
+DATABASE_URL="postgresql://your_user:your_password@localhost:5432/your_database?schema=public"
+```
+
+Change `your_user`, `your_password`, and `your_database` according to your PostgreSQL setup.
+
+---
+
+### 3. Update `prisma/schema.prisma`
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}
+```
+
+This defines your `User` model.
+
+---
+
+### 4. Run Migration
+
+```bash
+npx prisma migrate dev --name init
+```
+
+This will:
+- Create the `User` table inside your database
+- Generate the Prisma client
+
+---
+
+### 5. Update Backend to Use Prisma
+
+Update `backend/node-api/routes/auth.js`:
+
+```javascript
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+const router = express.Router();
+
+// Register
+router.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  const existingUser = await prisma.user.findUnique({ where: { username } });
+  if (existingUser) {
+    return res.status(400).json({ message: 'Username already taken' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await prisma.user.create({
+    data: { username, password: hashedPassword },
+  });
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+// Login
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { username } });
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid credentials' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    return res.status(400).json({ message: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+  res.json({ token });
+});
+
+module.exports = router;
+```
+
+---

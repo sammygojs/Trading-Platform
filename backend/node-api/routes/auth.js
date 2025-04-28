@@ -1,17 +1,25 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
 
-// In-memory fake DB (later we connect real DB)
-const users = [];
+const prisma = new PrismaClient();
+const router = express.Router();
 
 // Register
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
+
+  const existingUser = await prisma.user.findUnique({ where: { username } });
+  if (existingUser) {
+    return res.status(400).json({ message: 'Username already taken' });
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  users.push({ username, password: hashedPassword });
+  await prisma.user.create({
+    data: { username, password: hashedPassword },
+  });
 
   res.status(201).json({ message: 'User registered successfully' });
 });
@@ -19,7 +27,8 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = users.find(u => u.username === username);
+
+  const user = await prisma.user.findUnique({ where: { username } });
 
   if (!user) {
     return res.status(400).json({ message: 'Invalid credentials' });
