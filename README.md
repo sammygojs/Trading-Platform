@@ -694,3 +694,214 @@ export default function Dashboard() {
 ✅ Now user can log out, clearing the token and redirecting back to login.
 
 ---
+
+## 🚀 Sprint 2 — Add Basic Trading Functionality
+
+### 1. Database: Add a Trade Model (Backend Prisma)
+
+Update your `prisma/schema.prisma`:
+
+```prisma
+model Trade {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // BUY or SELL
+  quantity  Float
+  price     Float
+  createdAt DateTime @default(now())
+
+  User User @relation(fields: [userId], references: [id])
+}
+```
+
+✅ This creates a `Trade` table with fields to track user trades.
+
+---
+
+### 2. Run Prisma Migration
+
+```bash
+npx prisma migrate dev --name add-trade
+```
+
+✅ Updates your local database with the new `Trade` table.
+
+---
+
+### 3. Backend: Create Trading Endpoints
+
+Create `backend/node-api/routes/trade.js`:
+
+```javascript
+const express = require('express');
+const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
+
+const prisma = new PrismaClient();
+const router = express.Router();
+
+let currentPrice = 100;
+
+setInterval(() => {
+  const randomChange = (Math.random() - 0.5) * 2;
+  currentPrice += randomChange;
+}, 5000);
+
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid Token' });
+  }
+};
+
+router.post('/place', authenticate, async (req, res) => {
+  const { type, quantity } = req.body;
+
+  if (!['BUY', 'SELL'].includes(type)) {
+    return res.status(400).json({ message: 'Invalid trade type' });
+  }
+
+  const trade = await prisma.trade.create({
+    data: {
+      userId: req.user.id,
+      type,
+      quantity,
+      price: currentPrice,
+    },
+  });
+
+  res.json({ message: 'Trade placed', trade });
+});
+
+router.get('/portfolio', authenticate, async (req, res) => {
+  const trades = await prisma.trade.findMany({
+    where: { userId: req.user.id },
+  });
+
+  let totalQuantity = 0;
+  let totalValue = 0;
+
+  trades.forEach(trade => {
+    if (trade.type === 'BUY') {
+      totalQuantity += trade.quantity;
+      totalValue += trade.price * trade.quantity;
+    } else if (trade.type === 'SELL') {
+      totalQuantity -= trade.quantity;
+      totalValue -= trade.price * trade.quantity;
+    }
+  });
+
+  res.json({
+    currentPrice,
+    totalQuantity,
+    portfolioValue: totalQuantity * currentPrice,
+  });
+});
+
+module.exports = router;
+```
+
+---
+
+### 4. Connect Trade Route in Backend
+
+Update `backend/node-api/index.js`:
+
+```javascript
+const tradeRoutes = require('./routes/trade');
+
+app.use('/api/trade', tradeRoutes);
+```
+
+✅ Backend now supports:
+- `POST /api/trade/place`
+- `GET /api/trade/portfolio`
+
+---
+
+### 5. Frontend: Create a Trading Page
+
+Create `frontend/src/components/Trade.jsx`:
+
+```jsx
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+export default function Trade() {
+  const [currentPrice, setCurrentPrice] = useState(0);
+  const [quantity, setQuantity] = useState('');
+  const [portfolio, setPortfolio] = useState({});
+
+  const token = localStorage.getItem('token');
+
+  const fetchPortfolio = async () => {
+    const res = await axios.get('http://localhost:5000/api/trade/portfolio', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setCurrentPrice(res.data.currentPrice);
+    setPortfolio(res.data);
+  };
+
+  const placeTrade = async (type) => {
+    await axios.post('http://localhost:5000/api/trade/place', {
+      type,
+      quantity: parseFloat(quantity),
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setQuantity('');
+    fetchPortfolio();
+  };
+
+  useEffect(() => {
+    fetchPortfolio();
+    const interval = setInterval(fetchPortfolio, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div>
+      <h2>Trading</h2>
+      <p>Current Price: {currentPrice.toFixed(2)}</p>
+      <input
+        type="number"
+        placeholder="Quantity"
+        value={quantity}
+        onChange={(e) => setQuantity(e.target.value)}
+      />
+      <button onClick={() => placeTrade('BUY')}>Buy</button>
+      <button onClick={() => placeTrade('SELL')}>Sell</button>
+
+      <h3>Portfolio</h3>
+      <p>Total Quantity: {portfolio.totalQuantity}</p>
+      <p>Portfolio Value: {portfolio.portfolioValue?.toFixed(2)}</p>
+    </div>
+  );
+}
+```
+
+---
+
+### 6. Update AppRouter
+
+Update `frontend/src/router/AppRouter.jsx`:
+
+```jsx
+import Trade from '../components/Trade';
+
+<Route path="/trade" element={
+  <ProtectedRoute>
+    <Trade />
+  </ProtectedRoute>
+} />
+```
+
+✅ Now users can access `/trade` to buy/sell and view their portfolio.
+
+---

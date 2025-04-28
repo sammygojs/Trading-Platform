@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const tradeRoutes = require('./routes/trade')
 
 const app = express();
 
@@ -8,11 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 const authRoutes = require('./routes/auth');
 
 // ... (middleware)
 app.use('/api/auth', authRoutes);
+
+app.use('/api/trade', tradeRoutes);
 
 // Sample Route
 app.get('/', (req, res) => {

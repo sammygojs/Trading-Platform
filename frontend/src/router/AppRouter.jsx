@@ -3,6 +3,7 @@ import Login from '../components/Login';
 import Register from '../components/Register';
 import Dashboard from '../components/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
+import Trade from '../components/Trade';
 
 export default function AppRouter() {
   return (
@@ -13,6 +14,11 @@ export default function AppRouter() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/trade" element={
+          <ProtectedRoute>
+            <Trade />
           </ProtectedRoute>
         } />
       </Routes>
