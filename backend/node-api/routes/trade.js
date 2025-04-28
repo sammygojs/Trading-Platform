@@ -38,7 +38,7 @@ router.post('/place', authenticate, async (req, res) => {
 
   const trade = await prisma.trade.create({
     data: {
-      userId: req.user.id,
+      userId: req.user.id, // ✅
       type,
       quantity,
       price: currentPrice,
@@ -47,6 +47,7 @@ router.post('/place', authenticate, async (req, res) => {
 
   res.json({ message: 'Trade placed', trade });
 });
+
 
 // Get portfolio (all trades)
 router.get('/portfolio', authenticate, async (req, res) => {
