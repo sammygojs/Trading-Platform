@@ -1,4 +1,17 @@
+import { useNavigate } from 'react-router-dom';
+
 export default function Dashboard() {
-    return <h1>Dashboard</h1>;
-  }
-  
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  return (
+    <div>
+      <h2>Welcome to Dashboard</h2>
+      <button onClick={handleLogout}>Logout</button>
+    </div>
+  );
+}

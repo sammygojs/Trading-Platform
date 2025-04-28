@@ -598,3 +598,99 @@ npm run dev
 ✅ Frontend available at `http://localhost:5173/`.
 
 ---
+
+## 🚀 Sprint 1 — Part 5: Add Protected Route (JWT Check)
+
+### 🎯 Why a Protected Route?
+
+Currently, anyone can manually type `http://localhost:5173/dashboard` and access the dashboard even without logging in.
+
+✅ We want to protect `/dashboard`:
+- If no valid token (JWT) in `localStorage`, redirect to `/` (login page).
+- If logged in (token exists), allow access.
+
+---
+
+## 📋 Steps to Implement Protected Route
+
+### 1. Create `ProtectedRoute.jsx`
+
+Inside `frontend/src/router/ProtectedRoute.jsx`:
+
+```jsx
+import { Navigate } from 'react-router-dom';
+
+export default function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+```
+
+✅ This component checks if a token exists in localStorage.
+
+---
+
+### 2. Update `AppRouter.jsx` to Use ProtectedRoute
+
+Modify `frontend/src/router/AppRouter.jsx`:
+
+```jsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from '../components/Login';
+import Register from '../components/Register';
+import Dashboard from '../components/Dashboard';
+import ProtectedRoute from './ProtectedRoute';
+
+export default function AppRouter() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+✅ Now `/dashboard` is protected.
+
+---
+
+### 3. (Optional) Add Logout Button to Dashboard
+
+Update `frontend/src/components/Dashboard.jsx`:
+
+```jsx
+import { useNavigate } from 'react-router-dom';
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  return (
+    <div>
+      <h2>Welcome to Dashboard</h2>
+      <button onClick={handleLogout}>Logout</button>
+    </div>
+  );
+}
+```
+
+✅ Now user can log out, clearing the token and redirecting back to login.
+
+---
