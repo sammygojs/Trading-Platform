@@ -5,8 +5,11 @@ import Dashboard from '../components/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
 import Trade from '../components/Trade';
 import TradeHistory from '../components/TradeHistory';
+import NotFound from '../components/NotFound';
+import NotFoundAuth from '../components/NotFoundAuth';
 
 export default function AppRouter() {
+  const token = localStorage.getItem('token');
   return (
     <Router>
       <Routes>
@@ -27,6 +30,8 @@ export default function AppRouter() {
             <Trade />
           </ProtectedRoute>
         } />
+        {/* <Route path="*" element={<NotFound />} /> */}
+        <Route path="*" element={token ? <NotFoundAuth /> : <NotFound />} />
       </Routes>
     </Router>
   );

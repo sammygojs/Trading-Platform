@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import PortfolioChart from './PortfolioChart'
+import Navbar from './Navbar';
 
 export default function TradeHistory() {
   const [trades, setTrades] = useState([]);
@@ -19,6 +20,7 @@ export default function TradeHistory() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <Navbar/>
       <h2>Trade History</h2>
 
       <PortfolioChart trades={trades} />

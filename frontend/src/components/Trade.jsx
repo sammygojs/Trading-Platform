@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Navbar from './Navbar';
 
 export default function Trade() {
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -34,7 +35,8 @@ export default function Trade() {
   }, []);
 
   return (
-    <div>
+    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <Navbar />
       <h2>Trading</h2>
       <p>Current Price: {currentPrice.toFixed(2)}</p>
       <input
