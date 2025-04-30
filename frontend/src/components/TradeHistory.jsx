@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import PortfolioChart from './PortfolioChart'
 
 export default function TradeHistory() {
   const [trades, setTrades] = useState([]);
@@ -17,9 +18,12 @@ export default function TradeHistory() {
   }, []);
 
   return (
-    <div>
+    <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <h2>Trade History</h2>
-      <table border="1" cellPadding="6">
+
+      <PortfolioChart trades={trades} />
+
+      <table border="1" cellPadding="6" style={{ marginTop: '20px' }}>
         <thead>
           <tr>
             <th>Type</th>

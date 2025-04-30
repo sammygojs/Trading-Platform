@@ -24,3 +24,5 @@ const PortfolioChart = ({ trades }) => {
     </div>
   );
 };
+
+export default PortfolioChart;
