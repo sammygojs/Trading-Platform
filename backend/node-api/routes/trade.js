@@ -75,4 +75,14 @@ router.get('/portfolio', authenticate, async (req, res) => {
   });
 });
 
+router.get('/history', authenticate, async (req, res) => {
+  const trades = await prisma.trade.findMany({
+    where: { userId: req.user.id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  res.json(trades);
+});
+
+
 module.exports = router;
