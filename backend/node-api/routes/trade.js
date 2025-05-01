@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -9,10 +10,21 @@ const router = express.Router();
 let currentPrice = 100;
 
 // Update price every 5 seconds
-setInterval(() => {
-  const randomChange = (Math.random() - 0.5) * 2; // random between -1 and +1
-  currentPrice += randomChange;
-}, 5000);
+// setInterval(() => {
+//   const randomChange = (Math.random() - 0.5) * 2; // random between -1 and +1
+//   currentPrice += randomChange;
+// }, 5000);
+
+const fetchPrice = async (symbol = 'BTC') => {
+  try {
+    const res = await axios.get(`http://localhost:5263/api/price/${symbol}`);
+    return res.data.price;
+  } catch (err) {
+    console.error('Error fetching price:', err.message);
+    return null;
+  }
+};
+
 
 // Middleware to protect routes
 const authenticate = (req, res, next) => {
@@ -36,9 +48,14 @@ router.post('/place', authenticate, async (req, res) => {
     return res.status(400).json({ message: 'Invalid trade type' });
   }
 
+  const currentPrice = await fetchPrice('BTC');
+  if (!currentPrice) {
+    return res.status(500).json({ message: 'Unable to fetch current price' });
+  }
+
   const trade = await prisma.trade.create({
     data: {
-      userId: req.user.id, // ✅
+      userId: req.user.id,
       type,
       quantity,
       price: currentPrice,
@@ -49,6 +66,7 @@ router.post('/place', authenticate, async (req, res) => {
 });
 
 
+
 // Get portfolio (all trades)
 router.get('/portfolio', authenticate, async (req, res) => {
   const trades = await prisma.trade.findMany({
@@ -56,17 +74,19 @@ router.get('/portfolio', authenticate, async (req, res) => {
   });
 
   let totalQuantity = 0;
-  let totalValue = 0;
 
   trades.forEach(trade => {
     if (trade.type === 'BUY') {
       totalQuantity += trade.quantity;
-      totalValue += trade.price * trade.quantity;
     } else if (trade.type === 'SELL') {
       totalQuantity -= trade.quantity;
-      totalValue -= trade.price * trade.quantity;
     }
   });
+
+  const currentPrice = await fetchPrice('BTC');
+  if (!currentPrice) {
+    return res.status(500).json({ message: 'Unable to fetch current price' });
+  }
 
   res.json({
     currentPrice,
@@ -74,6 +94,7 @@ router.get('/portfolio', authenticate, async (req, res) => {
     portfolioValue: totalQuantity * currentPrice,
   });
 });
+
 
 router.get('/history', authenticate, async (req, res) => {
   const trades = await prisma.trade.findMany({
