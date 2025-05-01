@@ -9,11 +9,20 @@ export default function Navbar() {
   };
 
   return (
-    <nav style={{ padding: '10px', borderBottom: '1px solid #ccc', marginBottom: '20px' }}>
-      <Link to="/trade" style={{ marginRight: '15px' }}>Trade</Link>
-      <Link to="/history" style={{ marginRight: '15px' }}>History</Link>
-      <Link to="/dashboard" style={{ marginRight: '15px' }}>Dashboard</Link>
-      <button onClick={handleLogout}>Logout</button>
+    <nav className="bg-white shadow-md">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="flex space-x-6">
+          <Link to="/trade" className="text-gray-700 font-medium hover:text-blue-600 transition">Trade</Link>
+          <Link to="/history" className="text-gray-700 font-medium hover:text-blue-600 transition">History</Link>
+          <Link to="/dashboard" className="text-gray-700 font-medium hover:text-blue-600 transition">Dashboard</Link>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-1.5 rounded-md transition"
+        >
+          Logout
+        </button>
+      </div>
     </nav>
   );
 }
