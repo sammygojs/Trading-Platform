@@ -32,7 +32,7 @@ const authenticate = (req, res, next) => {
 
 // 📌 Place a trade (BUY or SELL)
 router.post('/place', authenticate, async (req, res) => {
-  const { type, quantity, symbol } = req.body; 
+  const { type, quantity, symbol } = req.body;
 
   if (!['BUY', 'SELL'].includes(type)) {
     return res.status(400).json({ message: 'Invalid trade type' });
@@ -75,7 +75,7 @@ router.post('/place', authenticate, async (req, res) => {
       },
     });
   }
-  
+
 
   const trade = await prisma.trade.create({
     data: {
@@ -88,6 +88,11 @@ router.post('/place', authenticate, async (req, res) => {
   });
 
   res.json({ message: 'Trade placed', trade });
+
+  const io = req.app.get('io');
+
+  io.to(String(req.user.id)).emit('trade_confirmation', `Your ${type} order for ${quantity} ${symbol} was successful at $${currentPrice.toFixed(2)}`);
+
 });
 
 

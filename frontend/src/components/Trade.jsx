@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
+import socket from '../socket'; // adjust the path
+import { toast } from 'react-toastify';
 
 export default function Trade() {
   const [quantity, setQuantity] = useState('');
@@ -44,7 +46,23 @@ export default function Trade() {
   useEffect(() => {
     fetchPortfolio();
     const interval = setInterval(fetchPortfolio, 5000);
-    return () => clearInterval(interval);
+
+    // 🔔 Listen for trade confirmation
+    socket.on('trade_confirmation', (msg) => {
+      toast.success(msg, {
+        position: 'bottom-right',
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.off('trade_confirmation');
+    };
   }, []);
 
   const selected = portfolio.portfolio[symbol];

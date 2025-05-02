@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import socket from '../socket'; 
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Dashboard() {
         const decoded = jwtDecode(token);
         // Adjust depending on how your token stores the name (e.g., decoded.name or decoded.username)
         setUsername(decoded.username || decoded.name || 'User');
+        socket.emit('register', decoded.id); // 👈 emit register with userId
       } catch (err) {
         console.error('Invalid token:', err);
         setUsername('User');
