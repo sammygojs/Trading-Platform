@@ -3,13 +3,10 @@ import axios from 'axios';
 import Navbar from './Navbar';
 
 export default function Trade() {
-  // const [currentPrice, setCurrentPrice] = useState(0);
   const [quantity, setQuantity] = useState('');
-  const [portfolio, setPortfolio] = useState({});
-  const [symbol, setSymbol] = useState('BTC'); // default to BTC
-  const [symbolPrice, setSymbolPrice ] = useState('')
+  const [portfolio, setPortfolio] = useState({ portfolio: {}, balance: 0 });
+  const [symbol, setSymbol] = useState('BTC');
   const symbols = ['BTC', 'ETH', 'AAPL'];
-
 
   const token = localStorage.getItem('token');
 
@@ -18,9 +15,7 @@ export default function Trade() {
       const res = await axios.get('http://localhost:5003/api/trade/portfolio', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // setCurrentPrice(res.data.currentPrice);
       setPortfolio(res.data);
-      // console.log(res.data);
     } catch (err) {
       console.error("Failed to fetch portfolio:", err);
     }
@@ -33,7 +28,7 @@ export default function Trade() {
         {
           type,
           quantity: parseFloat(quantity),
-          symbol, // 👈 send selected symbol
+          symbol,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -52,6 +47,8 @@ export default function Trade() {
     return () => clearInterval(interval);
   }, []);
 
+  const selected = portfolio.portfolio[symbol];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 px-4 py-8">
       <Navbar />
@@ -60,7 +57,8 @@ export default function Trade() {
 
         <div className="text-center text-lg text-gray-700">
           <p className="mb-2">
-            <span className="font-medium">Current Price: </span> ${portfolio[symbol].currentPrice}
+            <span className="font-medium">Current Price:</span>{' '}
+            ${selected?.currentPrice?.toFixed(2) ?? 'Loading...'}
           </p>
         </div>
 
@@ -76,6 +74,7 @@ export default function Trade() {
             onChange={(e) => setQuantity(e.target.value)}
             className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
+
           <button
             onClick={() => placeTrade('BUY')}
             className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-md transition"
@@ -90,13 +89,24 @@ export default function Trade() {
           </button>
         </div>
 
-        <div className="space-y-4">
-          {Object.entries(portfolio).map(([sym, data]) => (
+        <div className="text-center text-lg text-gray-800 font-medium mt-4">
+          Available Cash Balance: ${portfolio.balance?.toFixed(2) ?? '...'}
+        </div>
+
+        <div className="space-y-4 mt-6">
+          {Object.entries(portfolio.portfolio).map(([sym, data]) => (
             <div key={sym} className="border-t pt-2">
               <h4 className="font-semibold text-lg text-gray-700">{sym}</h4>
-              <p><span className="font-medium">Current Price:</span> ${data.currentPrice.toFixed(2)}</p>
+              <p><span className="font-medium">Current Price:</span> ${data.currentPrice?.toFixed(2)}</p>
               <p><span className="font-medium">Total Quantity:</span> {data.totalQuantity}</p>
-              <p><span className="font-medium">Portfolio Value:</span> ${data.portfolioValue.toFixed(2)}</p>
+              <p><span className="font-medium">Average Buy Price:</span> ${data.avgBuyPrice?.toFixed(2)}</p>
+              <p><span className="font-medium">Portfolio Value:</span> ${data.portfolioValue?.toFixed(2)}</p>
+              <p>
+                <span className="font-medium">Unrealized P&L:</span>{' '}
+                <span className={data.unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  ${data.unrealizedPnl?.toFixed(2)}
+                </span>
+              </p>
             </div>
           ))}
         </div>

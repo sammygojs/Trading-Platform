@@ -6,15 +6,6 @@ const axios = require('axios');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// Simulate a random stock price between 90 and 110
-let currentPrice = 100;
-
-// Update price every 5 seconds
-// setInterval(() => {
-//   const randomChange = (Math.random() - 0.5) * 2; // random between -1 and +1
-//   currentPrice += randomChange;
-// }, 5000);
-
 const fetchPrice = async (symbol = 'BTC') => {
   try {
     const res = await axios.get(`http://localhost:5263/api/price/${symbol}`);
@@ -24,7 +15,6 @@ const fetchPrice = async (symbol = 'BTC') => {
     return null;
   }
 };
-
 
 // Middleware to protect routes
 const authenticate = (req, res, next) => {
@@ -40,9 +30,9 @@ const authenticate = (req, res, next) => {
   }
 };
 
-// Place a trade (BUY or SELL)
+// 📌 Place a trade (BUY or SELL)
 router.post('/place', authenticate, async (req, res) => {
-  const { type, quantity, symbol } = req.body;
+  const { type, quantity, symbol } = req.body; 
 
   if (!['BUY', 'SELL'].includes(type)) {
     return res.status(400).json({ message: 'Invalid trade type' });
@@ -57,6 +47,36 @@ router.post('/place', authenticate, async (req, res) => {
     return res.status(500).json({ message: 'Unable to fetch price for symbol' });
   }
 
+  const totalCost = currentPrice * quantity;
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+  if (type === 'BUY' && user.balance < totalCost) {
+    return res.status(400).json({ message: 'Insufficient balance' });
+  }
+
+  // Update balance
+  if (type === 'BUY') {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        balance: {
+          decrement: totalCost,
+        },
+      },
+    });
+  } else if (type === 'SELL') {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        balance: {
+          increment: totalCost,
+        },
+      },
+    });
+  }
+  
+
   const trade = await prisma.trade.create({
     data: {
       userId: req.user.id,
@@ -70,10 +90,15 @@ router.post('/place', authenticate, async (req, res) => {
   res.json({ message: 'Trade placed', trade });
 });
 
-// Get portfolio (all trades)
+
+// 📊 Get portfolio (grouped by symbol)
 router.get('/portfolio', authenticate, async (req, res) => {
   const trades = await prisma.trade.findMany({
     where: { userId: req.user.id },
+  });
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
   });
 
   const summary = {};
@@ -81,7 +106,7 @@ router.get('/portfolio', authenticate, async (req, res) => {
   for (const trade of trades) {
     const sym = trade.symbol;
     if (!summary[sym]) {
-      summary[sym] = { totalQuantity: 0, totalValue: 0 };
+      summary[sym] = { totalQuantity: 0, totalBuyCost: 0 };
     }
 
     const q = trade.quantity;
@@ -89,27 +114,36 @@ router.get('/portfolio', authenticate, async (req, res) => {
 
     if (trade.type === 'BUY') {
       summary[sym].totalQuantity += q;
-      summary[sym].totalValue += q * p;
+      summary[sym].totalBuyCost += q * p;
     } else if (trade.type === 'SELL') {
       summary[sym].totalQuantity -= q;
-      summary[sym].totalValue -= q * p;
+      summary[sym].totalBuyCost -= q * p;
     }
   }
 
-  const response = {};
+  const portfolio = {};
 
   for (const symbol of Object.keys(summary)) {
-    const price = await fetchPrice(symbol);
-    response[symbol] = {
-      currentPrice: price,
-      totalQuantity: summary[symbol].totalQuantity,
-      portfolioValue: summary[symbol].totalQuantity * price,
+    const currentPrice = await fetchPrice(symbol);
+    const { totalQuantity, totalBuyCost } = summary[symbol];
+    const avgBuyPrice = totalQuantity !== 0 ? totalBuyCost / totalQuantity : 0;
+
+    portfolio[symbol] = {
+      currentPrice,
+      totalQuantity,
+      avgBuyPrice,
+      portfolioValue: currentPrice * totalQuantity,
+      unrealizedPnl: (currentPrice - avgBuyPrice) * totalQuantity,
     };
   }
 
-  res.json(response);
+  res.json({
+    portfolio,
+    balance: user.balance,
+  });
 });
 
+// 📄 Trade history
 router.get('/history', authenticate, async (req, res) => {
   const trades = await prisma.trade.findMany({
     where: { userId: req.user.id },
@@ -118,6 +152,5 @@ router.get('/history', authenticate, async (req, res) => {
 
   res.json(trades);
 });
-
 
 module.exports = router;

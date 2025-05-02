@@ -986,3 +986,38 @@ import Trade from '../components/Trade';
 * `frontend/src/router/ProtectedRoute.jsx`: token expiration check using `jwt-decode`
 
 ---
+
+## 🔄 Updates 3/5/2025
+
+### 🛠️ C# Microservice Integration
+
+* Created a standalone C# (.NET Core Web API) service to simulate and return asset prices.
+* Exposes endpoint: `GET /api/price/{symbol}`.
+* Example response: `{ "symbol": "BTC", "price": 102.33, "timestamp": "..." }`
+
+### 👨‍💻 Node.js Service Update
+
+* Removed local price simulation.
+* Integrated Axios call in Node.js backend to fetch live prices from the C# service.
+* Refactored `/place` and `/portfolio` routes to use dynamic prices via C#.
+* Fixed Prisma update logic bug by separating `increment` and `decrement` balance updates.
+
+### 💹 Multi-Commodity Trading
+
+* Added support for trading multiple assets: `BTC`, `ETH`, and `AAPL`.
+* Schema updated: added `symbol` column to `Trade` table via Prisma migration.
+* Portfolio response groups trades by symbol with `totalQuantity`, `avgBuyPrice`, `portfolioValue`, and `unrealizedPnl`.
+
+### 🖥️ Frontend Enhancements
+
+* Updated Trade page to allow selecting symbols from a dropdown.
+* Displayed live current price, quantity, portfolio value, and P\&L per symbol.
+* Showed available cash balance.
+* Handled missing price safely with fallback rendering.
+
+### 🧠 Debugging & Fixes
+
+* Fixed persistent `500 Internal Server Error` from Prisma due to conflicting balance updates.
+* Improved error logging in frontend for failed trade submissions.
+
+---
