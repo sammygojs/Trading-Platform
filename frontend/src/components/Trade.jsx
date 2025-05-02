@@ -3,9 +3,13 @@ import axios from 'axios';
 import Navbar from './Navbar';
 
 export default function Trade() {
-  const [currentPrice, setCurrentPrice] = useState(0);
+  // const [currentPrice, setCurrentPrice] = useState(0);
   const [quantity, setQuantity] = useState('');
   const [portfolio, setPortfolio] = useState({});
+  const [symbol, setSymbol] = useState('BTC'); // default to BTC
+  const [symbolPrice, setSymbolPrice ] = useState('')
+  const symbols = ['BTC', 'ETH', 'AAPL'];
+
 
   const token = localStorage.getItem('token');
 
@@ -14,8 +18,9 @@ export default function Trade() {
       const res = await axios.get('http://localhost:5003/api/trade/portfolio', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setCurrentPrice(res.data.currentPrice);
+      // setCurrentPrice(res.data.currentPrice);
       setPortfolio(res.data);
+      // console.log(res.data);
     } catch (err) {
       console.error("Failed to fetch portfolio:", err);
     }
@@ -28,6 +33,7 @@ export default function Trade() {
         {
           type,
           quantity: parseFloat(quantity),
+          symbol, // 👈 send selected symbol
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -54,11 +60,15 @@ export default function Trade() {
 
         <div className="text-center text-lg text-gray-700">
           <p className="mb-2">
-            <span className="font-medium">Current Price:</span> ${currentPrice.toFixed(2)}
+            <span className="font-medium">Current Price: </span> ${portfolio[symbol].currentPrice}
           </p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-4 justify-center">
+          <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
+            {symbols.map(sym => <option key={sym} value={sym}>{sym}</option>)}
+          </select>
+
           <input
             type="number"
             placeholder="Quantity"
@@ -80,14 +90,15 @@ export default function Trade() {
           </button>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-md">
-          <h3 className="text-xl font-medium text-gray-800 mb-2">Portfolio</h3>
-          <p>
-            <span className="font-medium">Total Quantity:</span> {portfolio.totalQuantity ?? 0}
-          </p>
-          <p>
-            <span className="font-medium">Portfolio Value:</span> ${portfolio.portfolioValue?.toFixed(2) ?? 0}
-          </p>
+        <div className="space-y-4">
+          {Object.entries(portfolio).map(([sym, data]) => (
+            <div key={sym} className="border-t pt-2">
+              <h4 className="font-semibold text-lg text-gray-700">{sym}</h4>
+              <p><span className="font-medium">Current Price:</span> ${data.currentPrice.toFixed(2)}</p>
+              <p><span className="font-medium">Total Quantity:</span> {data.totalQuantity}</p>
+              <p><span className="font-medium">Portfolio Value:</span> ${data.portfolioValue.toFixed(2)}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

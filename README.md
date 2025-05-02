@@ -906,50 +906,35 @@ import Trade from '../components/Trade';
 
 ---
 
-🛠️ C# Microservice Integration
+## ↺ Updates (1/05/2025)
 
-Created a standalone C# (.NET Core Web API) service to simulate and return asset prices.
+### 🛠️ C# Microservice Integration
+- Created a standalone C# (.NET Core Web API) service to simulate and return asset prices.
+- Exposes endpoint: `GET /api/price/{symbol}`.
+- Returns: `{ "symbol": "BTC", "price": 102.33, "timestamp": "..." }`
+- Started the service locally and tested via browser and Postman.
 
-Exposes endpoint: GET /api/price/{symbol}.
+### 👨‍💻 Node.js Backend Changes
+- Removed simulated price logic (`currentPrice` and `setInterval`) from `routes/trade.js`.
+- Added `axios` and implemented a new function `fetchPrice(symbol)` to call the C# service.
+- Updated `/api/trade/place` and `/api/trade/portfolio` to use `fetchPrice()` instead of `currentPrice`.
 
-Returns: { "symbol": "BTC", "price": 102.33, "timestamp": "..." }
+### 🔐 Frontend Authentication Enhancements
+- Installed and configured `jwt-decode` to verify JWT expiration on the frontend.
+- Modified `ProtectedRoute.jsx` to decode token and reject access if expired.
+- Added automatic redirect from `/` to `/dashboard` if token exists and is valid (in `Login.jsx`).
 
-Started the service locally and tested via browser and Postman.
+### 📍 Navigation and Routing Improvements
+- Implemented a shared navigation tab that appears **only after login**.
+- Added a generic fallback `NotFound.jsx` component.
+- Logic shows different fallback pages based on whether the user is authenticated or not.
 
-👨‍💻 Node.js Backend Changes
+### ✅ Summary of Files Modified
+- `backend/node-api/routes/trade.js`: replaced local price with external call
+- `frontend/src/api/auth.js`: no changes here
+- `frontend/src/router/ProtectedRoute.jsx`: checks token expiration
+- `frontend/src/components/Login.jsx`: auto-redirects to dashboard
+- `frontend/src/components/NotFound.jsx`: shows fallback UI based on login
+- `frontend/src/AppRouter.jsx`: updated with new routes and ProtectedRoute logic
 
-Removed simulated price logic (currentPrice and setInterval) from routes/trade.js.
-
-Added axios and implemented a new function fetchPrice(symbol) to call the C# service.
-
-Updated /api/trade/place and /api/trade/portfolio to use fetchPrice() instead of currentPrice.
-
-🔐 Frontend Authentication Enhancements
-
-Installed and configured jwt-decode to verify JWT expiration on the frontend.
-
-Modified ProtectedRoute.jsx to decode token and reject access if expired.
-
-Added automatic redirect from / to /dashboard if token exists and is valid (in Login.jsx).
-
-📍 Navigation and Routing Improvements
-
-Implemented a shared navigation tab that appears only after login.
-
-Added a generic fallback NotFound.jsx component.
-
-Logic shows different fallback pages based on whether the user is authenticated or not.
-
-✅ Summary of Files Modified
-
-backend/node-api/routes/trade.js: replaced local price with external call
-
-frontend/src/api/auth.js: no changes here
-
-frontend/src/router/ProtectedRoute.jsx: checks token expiration
-
-frontend/src/components/Login.jsx: auto-redirects to dashboard
-
-frontend/src/components/NotFound.jsx: shows fallback UI based on login
-
-frontend/src/AppRouter.jsx: updated with new routes and ProtectedRoute logic
+---

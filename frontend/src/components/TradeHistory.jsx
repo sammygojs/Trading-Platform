@@ -31,6 +31,7 @@ export default function TradeHistory() {
           <table className="min-w-full table-auto border-collapse rounded-md overflow-hidden shadow-sm">
             <thead>
               <tr className="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
+              <th className="px-6 py-3 text-left">Symbol</th>
                 <th className="px-6 py-3 text-left">Type</th>
                 <th className="px-6 py-3 text-left">Quantity</th>
                 <th className="px-6 py-3 text-left">Price</th>
@@ -40,6 +41,7 @@ export default function TradeHistory() {
             <tbody className="text-gray-700">
               {trades.map((t) => (
                 <tr key={t.id} className="border-t">
+                  <td className="px-6 py-3">{t.symbol}</td>
                   <td className="px-6 py-3">{t.type}</td>
                   <td className="px-6 py-3">{t.quantity}</td>
                   <td className="px-6 py-3">${t.price.toFixed(2)}</td>

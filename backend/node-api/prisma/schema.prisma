@@ -27,11 +27,11 @@ model User {
 model Trade {
   id        Int      @id @default(autoincrement())
   userId    Int
-  type      String   // BUY or SELL
+  symbol    String @default("BTC")   // e.g. BTC, ETH
+  type      String
   quantity  Float
   price     Float
   createdAt DateTime @default(now())
 
   User User @relation(fields: [userId], references: [id])
 }
-

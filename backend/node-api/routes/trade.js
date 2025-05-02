@@ -42,15 +42,19 @@ const authenticate = (req, res, next) => {
 
 // Place a trade (BUY or SELL)
 router.post('/place', authenticate, async (req, res) => {
-  const { type, quantity } = req.body;
+  const { type, quantity, symbol } = req.body;
 
   if (!['BUY', 'SELL'].includes(type)) {
     return res.status(400).json({ message: 'Invalid trade type' });
   }
 
-  const currentPrice = await fetchPrice('BTC');
+  if (!symbol || typeof symbol !== 'string') {
+    return res.status(400).json({ message: 'Symbol is required' });
+  }
+
+  const currentPrice = await fetchPrice(symbol);
   if (!currentPrice) {
-    return res.status(500).json({ message: 'Unable to fetch current price' });
+    return res.status(500).json({ message: 'Unable to fetch price for symbol' });
   }
 
   const trade = await prisma.trade.create({
@@ -59,13 +63,12 @@ router.post('/place', authenticate, async (req, res) => {
       type,
       quantity,
       price: currentPrice,
+      symbol: symbol.toUpperCase(),
     },
   });
 
   res.json({ message: 'Trade placed', trade });
 });
-
-
 
 // Get portfolio (all trades)
 router.get('/portfolio', authenticate, async (req, res) => {
@@ -73,28 +76,39 @@ router.get('/portfolio', authenticate, async (req, res) => {
     where: { userId: req.user.id },
   });
 
-  let totalQuantity = 0;
+  const summary = {};
 
-  trades.forEach(trade => {
-    if (trade.type === 'BUY') {
-      totalQuantity += trade.quantity;
-    } else if (trade.type === 'SELL') {
-      totalQuantity -= trade.quantity;
+  for (const trade of trades) {
+    const sym = trade.symbol;
+    if (!summary[sym]) {
+      summary[sym] = { totalQuantity: 0, totalValue: 0 };
     }
-  });
 
-  const currentPrice = await fetchPrice('BTC');
-  if (!currentPrice) {
-    return res.status(500).json({ message: 'Unable to fetch current price' });
+    const q = trade.quantity;
+    const p = trade.price;
+
+    if (trade.type === 'BUY') {
+      summary[sym].totalQuantity += q;
+      summary[sym].totalValue += q * p;
+    } else if (trade.type === 'SELL') {
+      summary[sym].totalQuantity -= q;
+      summary[sym].totalValue -= q * p;
+    }
   }
 
-  res.json({
-    currentPrice,
-    totalQuantity,
-    portfolioValue: totalQuantity * currentPrice,
-  });
-});
+  const response = {};
 
+  for (const symbol of Object.keys(summary)) {
+    const price = await fetchPrice(symbol);
+    response[symbol] = {
+      currentPrice: price,
+      totalQuantity: summary[symbol].totalQuantity,
+      portfolioValue: summary[symbol].totalQuantity * price,
+    };
+  }
+
+  res.json(response);
+});
 
 router.get('/history', authenticate, async (req, res) => {
   const trades = await prisma.trade.findMany({
