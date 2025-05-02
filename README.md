@@ -938,3 +938,51 @@ import Trade from '../components/Trade';
 - `frontend/src/AppRouter.jsx`: updated with new routes and ProtectedRoute logic
 
 ---
+
+## ↺ Updates 2/5/2025
+
+### 🛠️ C# Microservice Integration
+
+* Created a standalone C# (.NET Core Web API) service to simulate and return asset prices.
+* Exposes endpoint: `GET /api/price/{symbol}`.
+* Returns: `{ "symbol": "BTC", "price": 102.33, "timestamp": "..." }`
+* Enabled CORS for development testing.
+
+### 👨‍💻 Node.js Backend Changes
+
+* Removed local price simulation from `trade.js`.
+* Introduced `fetchPrice(symbol)` using Axios to call the C# price service.
+* Trade placement (`/api/trade/place`) now accepts and stores `symbol`.
+* Portfolio endpoint (`/api/trade/portfolio`) aggregates trades per symbol and queries live prices.
+* Prisma schema updated to add `symbol` field to `Trade` model with default fallback during migration.
+
+### 🔐 Frontend Authentication Enhancements
+
+* Used `jwt-decode` to verify token expiration and route users appropriately.
+* Auto-redirects from login to dashboard when token is valid.
+* Protected routes enforce valid and non-expired JWTs.
+
+### 📍 Navigation and Routing Improvements
+
+* Added a navigation menu post-login.
+* Added a fallback 404 page based on authentication state.
+
+### 📈 Frontend Trading Logic Enhancements
+
+* Users can now select between multiple commodities: BTC, ETH, AAPL.
+* Trades are placed with the selected symbol.
+* Portfolio is rendered with grouped views per symbol.
+* Trade history now includes the traded symbol in its data table.
+* Charting via Recharts shows portfolio value over time.
+* Current price updates periodically based on selected symbol.
+
+### ✅ Summary of Key Files Modified
+
+* `prisma/schema.prisma`: added `symbol` to `Trade`
+* `backend/node-api/routes/trade.js`: used `symbol` in trade placement and portfolio
+* `frontend/src/components/Trade.jsx`: added dropdown for symbols, renders grouped portfolio
+* `frontend/src/components/TradeHistory.jsx`: added `symbol` column
+* `frontend/src/components/PortfolioChart.jsx`: renders chart using updated `trades`
+* `frontend/src/router/ProtectedRoute.jsx`: token expiration check using `jwt-decode`
+
+---
