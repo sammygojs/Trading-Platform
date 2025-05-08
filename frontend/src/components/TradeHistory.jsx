@@ -3,13 +3,15 @@ import axios from 'axios';
 import PortfolioChart from './PortfolioChart';
 import Navbar from './Navbar';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function TradeHistory() {
   const [trades, setTrades] = useState([]);
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchHistory = async () => {
-      const res = await axios.get('http://localhost:5003/api/trade/history', {
+      const res = await axios.get(`${API_URL}/trade/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTrades(res.data);
@@ -31,7 +33,7 @@ export default function TradeHistory() {
           <table className="min-w-full table-auto border-collapse rounded-md overflow-hidden shadow-sm">
             <thead>
               <tr className="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
-              <th className="px-6 py-3 text-left">Symbol</th>
+                <th className="px-6 py-3 text-left">Symbol</th>
                 <th className="px-6 py-3 text-left">Type</th>
                 <th className="px-6 py-3 text-left">Quantity</th>
                 <th className="px-6 py-3 text-left">Price</th>

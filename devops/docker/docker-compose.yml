@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tradingdb
+    ports:
+      - "5432:5432"
+    # Optional: uncomment if you want persistent volume
+    # volumes:
+    #   - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: "/Users/sumitakoliya/Developer/Real Time Trading platform/backend/node-api"
+    ports:
+      - "5003:5003"
+    environment:
+      - JWT_SECRET=your_jwt_secret
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/tradingdb
+    depends_on:
+      - postgres
+      - priceservice
+
+  frontend:
+    build:
+      context: /Users/sumitakoliya/Developer/Real Time Trading platform/frontend
+      args:
+        VITE_API_URL: http://backend:5003/api
+    environment:
+      - VITE_API_URL=http://backend:5003/api
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+
+  priceservice:
+    build:
+      context: "/Users/sumitakoliya/Developer/Real Time Trading platform/PriceService"
+    ports:
+      - "5263:5263"
+
+# Optional volume for PostgreSQL data
+# volumes:
+#   pgdata:

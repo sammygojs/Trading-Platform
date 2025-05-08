@@ -8,7 +8,7 @@ const router = express.Router();
 
 const fetchPrice = async (symbol = 'BTC') => {
   try {
-    const res = await axios.get(`http://localhost:5263/api/price/${symbol}`);
+    const res = await axios.get(`http://priceservice:5263/api/price/${symbol}`);
     return res.data.price;
   } catch (err) {
     console.error('Error fetching price:', err.message);
@@ -140,6 +140,15 @@ router.get('/portfolio', authenticate, async (req, res) => {
       portfolioValue: currentPrice * totalQuantity,
       unrealizedPnl: (currentPrice - avgBuyPrice) * totalQuantity,
     };
+  }
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  
+  // ✅ Safe to access balance
+  if (user.balance < totalCost) {
+    return res.status(400).json({ message: "Insufficient balance" });
   }
 
   res.json({

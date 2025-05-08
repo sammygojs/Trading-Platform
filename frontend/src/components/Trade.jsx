@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
-import socket from '../socket'; // adjust the path
+import socket from '../socket';
 import { toast } from 'react-toastify';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Trade() {
   const [quantity, setQuantity] = useState('');
@@ -14,7 +16,7 @@ export default function Trade() {
 
   const fetchPortfolio = async () => {
     try {
-      const res = await axios.get('http://localhost:5003/api/trade/portfolio', {
+      const res = await axios.get(`${API_URL}/trade/portfolio`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPortfolio(res.data);
@@ -26,7 +28,7 @@ export default function Trade() {
   const placeTrade = async (type) => {
     try {
       await axios.post(
-        'http://localhost:5003/api/trade/place',
+        `${API_URL}/trade/place`,
         {
           type,
           quantity: parseFloat(quantity),
@@ -47,7 +49,6 @@ export default function Trade() {
     fetchPortfolio();
     const interval = setInterval(fetchPortfolio, 5000);
 
-    // 🔔 Listen for trade confirmation
     socket.on('trade_confirmation', (msg) => {
       toast.success(msg, {
         position: 'bottom-right',
